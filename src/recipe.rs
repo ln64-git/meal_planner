@@ -1,11 +1,11 @@
 use chatgpt::types::CompletionResponse;
 use regex::Regex;
 
-pub fn get_recipe(response: &CompletionResponse) {
+pub fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
     let mut in_ingredients = false;
     let mut in_instructions = false;
 
-    let mut recipe = String::new();
+    let mut title = String::new(); // Changed the name from 'recipe' to 'title'
     let mut note = String::new();
     let mut ingredients = Vec::new();
     let mut instructions = Vec::new();
@@ -24,7 +24,7 @@ pub fn get_recipe(response: &CompletionResponse) {
                 }
 
                 if line.starts_with("Recipe:") {
-                    recipe = line[7..].trim().to_string(); // Capture the recipe title without the label
+                    title = line[7..].trim().to_string(); // Capture the recipe title without the label
                 } else if line.starts_with("Note:") {
                     note = line[5..].trim().to_string(); // Capture the note without the label
                 } else {
@@ -41,32 +41,21 @@ pub fn get_recipe(response: &CompletionResponse) {
         }
     }
 
-    // Remove extra whitespace from the recipe and note
-    recipe = recipe.trim().to_string();
+    // Remove extra whitespace from the title and note
+    title = title.trim().to_string();
     note = note.trim().to_string();
 
-    if !recipe.is_empty() {
-        println!("Recipe:");
-        println!("{}", recipe);
-        println!();
+    RecipeInfo {
+        title, // Updated the field name
+        note, // Added note field
+        ingredients,
+        instructions,
     }
-    if !ingredients.is_empty() {
-        println!("Ingredients:");
-        for ingredient in ingredients {
-            println!("• {}", ingredient);
-        }
-        println!();
-    }
-    if !instructions.is_empty() {
-        println!("Instructions:");
-        for (index, instruction) in instructions.iter().enumerate() {
-            println!("{}. {}", index + 1, instruction);
-        }
-        println!();
-    }
-    if !note.is_empty() {
-        println!("Note:");
-        println!("{}", note);
-        println!();
-    }
+}
+
+pub struct RecipeInfo {
+    pub title: String, // Changed the name from 'recipe' to 'title'
+    pub note: String, // Added note field
+    pub ingredients: Vec<String>,
+    pub instructions: Vec<String>,
 }
