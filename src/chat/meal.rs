@@ -1,11 +1,19 @@
 use chatgpt::types::CompletionResponse;
 use regex::Regex;
+use serde::{ Serialize, Deserialize };
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecipeInfo {
+    pub title: String,
+    pub note: String,
+    pub ingredients: Vec<String>,
+    pub instructions: Vec<String>,
+}
 
 pub(crate) fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
     let mut in_ingredients = false;
     let mut in_instructions = false;
-
-    let mut title = String::new(); // Changed the name from 'recipe' to 'title'
+    let mut title = String::new();
     let mut note = String::new();
     let mut ingredients = Vec::new();
     let mut instructions = Vec::new();
@@ -22,7 +30,6 @@ pub(crate) fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
                     in_instructions = true;
                     continue;
                 }
-
                 if line.starts_with("Recipe:") {
                     title = line[7..].trim().to_string(); // Capture the recipe title without the label
                 } else if line.starts_with("Note:") {
@@ -40,14 +47,11 @@ pub(crate) fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
             }
         }
     }
-
-    // Remove extra whitespace from the title and note
     title = title.trim().to_string();
     note = note.trim().to_string();
-
     RecipeInfo {
-        title, // Updated the field name
-        note, // Added note field
+        title,
+        note,
         ingredients,
         instructions,
     }
@@ -78,11 +82,4 @@ pub fn print_recipe(recipe: &RecipeInfo) {
         println!("{}", recipe.note);
         println!();
     }
-}
-
-pub struct RecipeInfo {
-    pub title: String, // Changed the name from 'recipe' to 'title'
-    pub note: String, // Added note field
-    pub ingredients: Vec<String>,
-    pub instructions: Vec<String>,
 }

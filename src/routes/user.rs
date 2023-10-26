@@ -11,7 +11,7 @@ pub struct User {
 
 #[post("/signin", data = "<user>")]
 pub fn signin(user: Json<User>) -> Json<String> {
-    let secret = "your_secret_key";
+    let secret: &str = "your_secret_key";
     let user_claims = User {
         id: 1,
         username: user.username.to_string(),
