@@ -1,7 +1,7 @@
 use chatgpt::types::CompletionResponse;
 use regex::Regex;
 
-pub fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
+pub(crate) fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
     let mut in_ingredients = false;
     let mut in_instructions = false;
 
