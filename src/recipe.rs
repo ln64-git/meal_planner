@@ -53,6 +53,33 @@ pub fn get_recipe(response: &CompletionResponse) -> RecipeInfo {
     }
 }
 
+pub fn print_recipe(recipe: &RecipeInfo) {
+    if !recipe.title.is_empty() {
+        println!("Recipe:");
+        println!("{}", recipe.title);
+        println!();
+    }
+    if !recipe.ingredients.is_empty() {
+        println!("Ingredients:");
+        for ingredient in &recipe.ingredients {
+            println!("• {}", ingredient);
+        }
+        println!();
+    }
+    if !recipe.instructions.is_empty() {
+        println!("Instructions:");
+        for (index, instruction) in recipe.instructions.iter().enumerate() {
+            println!("{}. {}", index + 1, instruction);
+        }
+        println!();
+    }
+    if !recipe.note.is_empty() {
+        println!("Note:");
+        println!("{}", recipe.note);
+        println!();
+    }
+}
+
 pub struct RecipeInfo {
     pub title: String, // Changed the name from 'recipe' to 'title'
     pub note: String, // Added note field
