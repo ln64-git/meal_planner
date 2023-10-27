@@ -12,6 +12,6 @@ pub(crate) async fn chat(ingredients: Vec<&str>) -> Result<CompletionResponse> {
         "Complete the following recipe with minimal scientific fashion. Name, ingredients and instructions labeled, add optional ingrediants to round meal out.".to_owned() +
         &ingredients.join(", ");
 
-    let response = client.send_message(content.clone()).await?;
+    let response = client.send_message(content).await?;
     Ok(response)
 }

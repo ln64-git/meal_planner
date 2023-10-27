@@ -1,40 +1,18 @@
-use core::fmt;
-
 use rocket_contrib::json::Json;
-use crate::chat::gpt_3_5_turbo;
-use crate::chat::meal;
-use crate::chat::meal::RecipeInfo;
+use serde::Serialize;
 
-impl fmt::Display for RecipeInfo {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if !self.title.is_empty() {
-            write!(f, "Recipe:\n{}", self.title)?;
-        }
-        if !self.ingredients.is_empty() {
-            write!(f, "Ingredients:\n")?;
-            for ingredient in &self.ingredients {
-                write!(f, "• {}\n", ingredient)?;
-            }
-        }
-        if !self.instructions.is_empty() {
-            write!(f, "Instructions:\n")?;
-            for (index, instruction) in self.instructions.iter().enumerate() {
-                write!(f, "{}. {}\n", index + 1, instruction)?;
-            }
-        }
-        if !self.note.is_empty() {
-            write!(f, "Note:\n{}", self.note)?;
-        }
+use crate::chat::{ gpt_3_5_turbo, meal };
 
-        Ok(())
-    }
+#[derive(Serialize)]
+pub struct RecipeResponse {
+    title: String,
+    ingredients: Vec<String>,
+    instructions: Vec<String>,
 }
 
-#[post("/meal", data = "<recipe>")]
-pub fn get_meal(recipe: Json<RecipeInfo>) -> Json<String> {
+#[post("/meal")]
+pub fn get_meal() -> Json<RecipeResponse> {
     let ingredients = vec!["potato", "lamb", "cinnamon", "onion"];
-
-    // Use Tokio's runtime to call the async function
     let response = tokio::runtime::Runtime
         ::new()
         .unwrap()
@@ -43,8 +21,21 @@ pub fn get_meal(recipe: Json<RecipeInfo>) -> Json<String> {
     match response {
         Ok(response) => {
             let recipe = meal::get_recipe(&response);
-            Json(recipe.to_string())
+            let recipe_response = RecipeResponse {
+                title: recipe.title.clone(),
+                ingredients: recipe.ingredients.clone(),
+                instructions: recipe.instructions.clone(),
+            };
+
+            Json(recipe_response)
         }
-        Err(error) => { Json(format!("Error: {:?}", error)) }
+        Err(error) => {
+            print!("{}", error);
+            Json(RecipeResponse {
+                title: String::new(),
+                ingredients: Vec::new(),
+                instructions: Vec::new(),
+            })
+        }
     }
 }

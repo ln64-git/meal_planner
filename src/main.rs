@@ -1,22 +1,15 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
-#[macro_use]
-extern crate rocket;
-extern crate rocket_contrib;
-
 mod chat {
     pub(crate) mod gpt_3_5_turbo;
     pub(crate) mod meal;
 }
+use chat::gpt_3_5_turbo::chat;
+use chat::meal::{ get_recipe, print_recipe };
 
-mod routes {
-    pub(crate) mod user;
-    pub(crate) mod meal;
-}
-use routes::user::static_rocket_route_info_for_signin;
-use routes::meal::static_rocket_route_info_for_get_meal;
-
-fn main() {
-    rocket::ignite().mount("/", routes![signin]).launch();
-    rocket::ignite().mount("/meal", routes![get_meal]).launch();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let ingredients = vec!["potato", "lamb", "cinnamon", "onion"];
+    let response = chat(ingredients).await?;
+    let recipe = get_recipe(&response);
+    print_recipe(&recipe);
+    Ok(())
 }
