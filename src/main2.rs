@@ -1,5 +1,7 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
+mod gpt_3_5_turbo;
+mod recipe;
+use gpt_3_5_turbo::chat;
+use recipe::get_recipe;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -8,21 +10,21 @@ struct ChatCompletion {
     // object: String,
     // created: u64,
     // model: String,
-        // choices: Vec<Choice>,
+    choices: Vec<Choice>,
     // usage: Usage,
 }
 
 #[derive(Debug, Deserialize)]
 struct Choice {
     // index: u64,
-        // message: Message,
+    message: Message,
     // finish_reason: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct Message {
     // role: String,
-        // content: String,
+    content: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,22 +34,11 @@ struct Usage {
     // total_tokens: u64,
 }
 
-
-
-#[macro_use]
-extern crate rocket;
-extern crate rocket_contrib;
-
-mod chat {
-    pub(crate) mod gpt_3_5_turbo;
-    pub(crate) mod meal;
-}
-
-mod routes {
-    pub(crate) mod meal;
-}
-use routes::meal::static_rocket_route_info_for_get_meal;
-
-fn main() {
-    rocket::ignite().mount("/", routes![ get_meal]).launch();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let ingredients = vec!["ramen", "peanut butter", "olive oil", "cheese"];
+    let response_str: String = chat(ingredients).await?;
+    let response: ChatCompletion = serde_json::from_str(&response_str)?;
+    get_recipe(&response);
+    Ok(())
 }
