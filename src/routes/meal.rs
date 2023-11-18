@@ -34,7 +34,6 @@ pub fn get_meal() -> Json<RecipeResponse> {
                 ingredients: recipe.ingredients.clone(),
                 instructions: recipe.instructions.clone(),
             };
-
             Json(recipe_response)
         }
         Err(error) => {
