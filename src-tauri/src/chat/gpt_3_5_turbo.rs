@@ -3,6 +3,15 @@ use reqwest;
 use serde_json::json;
 use std::env;
 
+#[tauri::command]
+pub async fn get_recipe(ingredients: Vec<&str>) -> Result<String, &'static str> {
+    let result = chat(ingredients).await;
+    match result {
+        Ok(result) => Ok(result),
+        Err(_) => Err("Failed to get recipe"),
+    }
+}
+
 pub async fn chat(ingredients: Vec<&str>) -> Result<String, reqwest::Error> {
     dotenv().ok();
     let client = reqwest::Client::new();
@@ -30,6 +39,6 @@ pub async fn chat(ingredients: Vec<&str>) -> Result<String, reqwest::Error> {
         .send()
         .await?;
 
-        let body = response.text().await?;
-        Ok(body)
+    let body = response.text().await?;
+    Ok(body)
 }
