@@ -8,21 +8,21 @@ struct ChatCompletion {
     // object: String,
     // created: u64,
     // model: String,
-        // choices: Vec<Choice>,
+    choices: Vec<Choice>,
     // usage: Usage,
 }
 
 #[derive(Debug, Deserialize)]
 struct Choice {
     // index: u64,
-        // message: Message,
+    message: Message,
     // finish_reason: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct Message {
     // role: String,
-        // content: String,
+    content: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,7 +1,8 @@
+use crate::ChatCompletion;
 use rocket_contrib::json::Json;
 use serde::Serialize;
 
-use crate::chat::gpt_3_5_turbo;
+use crate::chat::{gpt_3_5_turbo, meal};
 
 #[derive(Serialize)]
 pub struct RecipeResponse {
@@ -14,33 +15,30 @@ pub struct RecipeResponse {
 pub fn get_meal() -> Json<RecipeResponse> {
     let ingredients = vec!["potato", "lamb", "cinnamon", "onion"];
 
-    // let response_str: String = chat(ingredients).await?;
-    // let response: ChatCompletion = serde_json::from_str(&response_str)?;
-
-    let response = tokio::runtime::Runtime
-        ::new()
+    let response_str: String = tokio::runtime::Runtime::new()
         .unwrap()
-        .block_on(gpt_3_5_turbo::chat(ingredients));
+        .block_on(gpt_3_5_turbo::chat(ingredients))
+        .unwrap_or_else(|err| {
+            eprintln!("Error fetching response: {}", err);
+            String::new() // Return an empty string on error or handle it differently
+        });
+
+    let response: Result<ChatCompletion, _> = serde_json::from_str(&response_str);
 
     match response {
-        Ok(response) => {
-            println!("{}", response);
-            // let recipe = meal::get_recipe(&response);
-            // let recipe_response = RecipeResponse {
-            //     title: recipe.title.clone(),
-            //     ingredients: recipe.ingredients.clone(),
-            //     instructions: recipe.instructions.clone(),
-            // };
+        Ok(chat_completion) => {
+            let recipe = meal::get_recipe(&chat_completion);
 
-            let dummy_response = RecipeResponse {
-                title: "Dummy Title".to_string(),
-                ingredients: vec!["Dummy Ingredient".to_string()],
-                instructions: vec!["Dummy Instruction".to_string()],
+            let recipe_response = RecipeResponse {
+                title: recipe.title.clone(),
+                ingredients: recipe.ingredients.clone(),
+                instructions: recipe.instructions.clone(),
             };
-            Json(dummy_response)
+
+            Json(recipe_response)
         }
         Err(error) => {
-            print!("{}", error);
+            eprintln!("Error deserializing response: {}", error);
             Json(RecipeResponse {
                 title: String::new(),
                 ingredients: Vec::new(),
