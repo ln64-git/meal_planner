@@ -1,37 +1,42 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
+
+interface RecipeResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Choice[];
+}
+
+interface Choice {
+  index: number;
+  message: Message;
+}
+
+interface Message {
+  role: string;
+  content: string;
+}
+
+interface Recipe {
+  name: string;
+  ingredients: string[];
+  instructions: string[];
+}
 
 function App() {
   const [ingredients, setIngredients] = useState("");
-  const [response, setResponse] = useState("");
+  const [response, setResponse] = useState<RecipeResponse | string>("");
 
   const getRecipe = async () => {
-    console.log("Start");
-    console.log(ingredients);
     const ingredientsArray = ingredients.split(',').map((ingredient) => ingredient.trim());
-    
-    try {
       const recipeResponse = await invoke('get_recipe', {
         ingredients: ingredientsArray,
       });
-      setResponse(recipeResponse as string);
-      console.log(response); // This might log the updated state
-    } catch (error: any) {
-      console.error('Error invoking get_recipe:', error);
-      setResponse(error.toString());
-    }
-    console.log("Complete");
+      console.log(recipeResponse)
+      setResponse(JSON.parse(recipeResponse) as RecipeResponse);
   };
-
-  useEffect(() => {
-    if (response !== '') {
-      setResponse(response)
-      console.log(response)
-    }
-  }, [response]);
-
-
 
   return (
     <div className="container">
@@ -50,7 +55,35 @@ function App() {
         <button type="submit">Submit</button>
       </form>
 
-      <p>{response}</p>
+      {response && response.choices[0] && (
+        <div>
+          <h2>{response.choices[0]?.message.content}</h2>
+          <div>
+            <h3>Ingredients:</h3>
+            <ul>
+              {response.choices[0].message.content &&
+                response.choices[0].message.content
+                  .split("\n")
+                  .filter((line) => line.startsWith("-"))
+                  .map((ingredient, index) => (
+                    <li key={index}>{ingredient.trim().slice(1)}</li>
+                  ))}
+            </ul>
+          </div>
+          <div>
+            <h3>Instructions:</h3>
+            <ol>
+              {response.choices[0].message.content &&
+                response.choices[0].message.content
+                  .split("\n")
+                  .filter((line) => line.match(/^\d+\./))
+                  .map((instruction, index) => (
+                    <li key={index}>{instruction.trim().slice(3)}</li>
+                  ))}
+            </ol>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
