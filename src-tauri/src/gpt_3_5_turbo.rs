@@ -5,7 +5,10 @@ use std::env;
 
 #[tauri::command]
 pub async fn get_recipe(ingredients: Vec<&str>) -> Result<String, &'static str> {
+    println!("function called");
     let result = chat(ingredients).await;
+    print!("{:?}", result);
+
     match result {
         Ok(result) => Ok(result),
         Err(_) => Err("Failed to get recipe"),
