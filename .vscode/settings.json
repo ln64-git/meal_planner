@@ -11,5 +11,8 @@
   "vs-code-prettier-eslint.prettierLast": false,
   "[typescriptreact]": {
     "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  },
+  "[rust]": {
+    "editor.defaultFormatter": "jinxdash.prettier-rust"
   } // set as "true" to run 'prettier' last not first
 }

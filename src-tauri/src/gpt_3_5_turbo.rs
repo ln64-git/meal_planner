@@ -1,8 +1,9 @@
 use dotenv::dotenv;
 use reqwest;
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 use serde_json::json;
 use std::env;
+use tauri::regex::Regex;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RecipeResponse {
@@ -31,30 +32,25 @@ pub struct Recipe {
     pub ingredients: Vec<String>,
     pub instructions: Vec<String>,
 }
+
 impl RecipeResponse {
     pub fn to_recipe(&self) -> Result<Recipe, &'static str> {
-        let message_content = self
-            .choices
+        let message_content = self.choices
             .get(0)
             .map(|choice| choice.message.content.clone())
             .unwrap_or_default();
 
-        // Extracting relevant portion of the message content
-        let start_index = message_content.find("Recipe Name:").unwrap_or(0);
-        let end_index = message_content.find("Instructions:").unwrap_or(message_content.len());
-
-        let relevant_content = &message_content[start_index..end_index];
-
         // Debug print the relevant content
-        println!("{}", relevant_content);
+        println!("{}", message_content);
+        println!("{:?}", parse_recipe(&message_content));
 
         // Attempt to deserialize and print the JSON
-        match serde_json::from_str::<Recipe>(&relevant_content) {
-            Ok(recipe) => {
-                println!("Parsed JSON: {:#?}", recipe);
+        match parse_recipe(&message_content) {
+            Some(recipe) => {
+                println!("Parsed Recipe: {:?}", recipe);
                 Ok(recipe)
             }
-            Err(_) => Err("Failed to parse recipe"),
+            None => Err("Failed to parse recipe"),
         }
     }
 }
@@ -74,13 +70,14 @@ pub async fn chat(ingredients: Vec<&str>) -> Result<RecipeResponse, reqwest::Err
     let client = reqwest::Client::new();
     let api_key = env::var("OPENAI_API_KEY").expect("API_KEY not found.");
 
-    let request_data = json!({
+    let request_data =
+        json!({
         "model": "gpt-3.5-turbo",
         "messages": [
             {
                 "role": "user",
                 "content": format!(
-                    "Complete the following recipe with minimal scientific fashion. Name, ingredients and instructions labeled, add optional ingredients to round meal out. Ingredients: {}",
+                    "Complete the following recipe with minimal scientific fashion. 'Name', 'Ingredients' and 'Instructions' labeled. Ingredients: {}",
                     ingredients.join(", ")
                 ),
             },
@@ -93,10 +90,42 @@ pub async fn chat(ingredients: Vec<&str>) -> Result<RecipeResponse, reqwest::Err
         .header("Authorization", format!("Bearer {}", api_key))
         .header("Content-Type", "application/json")
         .json(&request_data)
-        .send()
-        .await?
-        .json()
-        .await?;
+        .send().await?
+        .json().await?;
 
     Ok(response)
+}
+
+pub fn parse_recipe(input: &str) -> Option<Recipe> {
+    // Define regular expressions for name, ingredients, and instructions
+    let name_regex: Regex = Regex::new(r"^(?:.*?(?:Name|Recipe): (.+?)\s+)?Ingredients:").unwrap();
+    let ingredients_regex = Regex::new(r"Ingredients:\s+((?s).+?)\s+Instructions:").unwrap();
+    let instructions_regex = Regex::new(r"Instructions:\s+((?s).+)").unwrap();
+
+    // Extract name, ingredients, and instructions using regular expressions
+    let name = name_regex.captures(input)?.get(1)?.as_str().trim().to_string();
+    let ingredients_str = ingredients_regex.captures(input)?.get(1)?.as_str();
+    let instructions_str = instructions_regex.captures(input)?.get(1)?.as_str();
+
+    // Split ingredients and instructions into Vec<String>
+    let ingredients = ingredients_str
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| line.trim().to_string())
+        .collect();
+
+    let instructions = instructions_str
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| line.trim().to_string())
+        .collect();
+
+    // Create Recipe struct
+    let recipe = Recipe {
+        name,
+        ingredients,
+        instructions,
+    };
+
+    Some(recipe)
 }
