@@ -5,6 +5,7 @@ interface Recipe {
   name: string;
   ingredients: string[];
   instructions: string[];
+  note?: string;
 }
 
 function App() {
@@ -36,7 +37,7 @@ function App() {
         />
         <button type="submit">Submit</button>
       </form>
-
+  
       {response && response instanceof Object && (
         <div>
           <h2>{response.name}</h2>
@@ -56,10 +57,16 @@ function App() {
               ))}
             </ol>
           </div>
+          {response.note && (
+            <div>
+              <h3>Note:</h3>
+              <p>{response.note}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-}
-
+          }
+  
 export default App;

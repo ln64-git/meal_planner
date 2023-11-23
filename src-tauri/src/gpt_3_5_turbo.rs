@@ -31,6 +31,7 @@ pub struct Recipe {
     pub name: String,
     pub ingredients: Vec<String>,
     pub instructions: Vec<String>,
+    pub note: Option<String>,
 }
 
 impl RecipeResponse {
@@ -95,17 +96,24 @@ pub async fn chat(ingredients: Vec<&str>) -> Result<RecipeResponse, reqwest::Err
 
     Ok(response)
 }
-
 pub fn parse_recipe(input: &str) -> Option<Recipe> {
-    // Define regular expressions for name, ingredients, and instructions
-    let name_regex: Regex = Regex::new(r"^(?:.*?(?:Name|Recipe): (.+?)\s+)?Ingredients:").unwrap();
-    let ingredients_regex = Regex::new(r"Ingredients:\s+((?s).+?)\s+Instructions:").unwrap();
-    let instructions_regex = Regex::new(r"Instructions:\s+((?s).+)").unwrap();
+    // Define regular expressions for name, ingredients, instructions, and optional note
+    let name_regex: Regex = Regex::new(r"^(?:(?:Name|Recipe): ?)?(.+?)(?:\n|$)").unwrap();
+    let ingredients_regex = Regex::new(r"Ingredients:\n((?s).*?)\nInstructions:").unwrap();
+    let instructions_regex = Regex::new(r"Instructions:\n((?s).*?)(?:\nNote:|$)").unwrap();
+    let note_regex = Regex::new(r"Note:\n((?s).*)$").unwrap();
 
-    // Extract name, ingredients, and instructions using regular expressions
-    let name = name_regex.captures(input)?.get(1)?.as_str().trim().to_string();
+    // Extract name, ingredients, instructions, and optional note using regular expressions
+    let name = name_regex
+        .captures(input)?
+        .get(1)
+        .map_or("", |m| m.as_str().trim())
+        .to_string();
     let ingredients_str = ingredients_regex.captures(input)?.get(1)?.as_str();
     let instructions_str = instructions_regex.captures(input)?.get(1)?.as_str();
+    let note_str = note_regex
+        .captures(input)
+        .map(|capture| capture.get(1).unwrap().as_str().trim().to_string());
 
     // Split ingredients and instructions into Vec<String>
     let ingredients = ingredients_str
@@ -125,6 +133,7 @@ pub fn parse_recipe(input: &str) -> Option<Recipe> {
         name,
         ingredients,
         instructions,
+        note: note_str,
     };
 
     Some(recipe)
