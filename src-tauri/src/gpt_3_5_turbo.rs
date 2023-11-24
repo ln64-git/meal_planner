@@ -115,17 +115,29 @@ pub fn parse_recipe(input: &str) -> Option<Recipe> {
         .captures(input)
         .map(|capture| capture.get(1).unwrap().as_str().trim().to_string());
 
-    // Split ingredients and instructions into Vec<String>
+    // Split ingredients and instructions into Vec<String>, removing decorative syntax
     let ingredients = ingredients_str
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(|line| line.trim().to_string())
+        .map(|line|
+            line
+                .trim_start_matches(
+                    |c: char| (c.is_whitespace() || c.is_digit(10) || c.is_ascii_punctuation())
+                )
+                .to_string()
+        )
         .collect();
 
     let instructions = instructions_str
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(|line| line.trim().to_string())
+        .map(|line|
+            line
+                .trim_start_matches(
+                    |c: char| (c.is_whitespace() || c.is_digit(10) || c.is_ascii_punctuation())
+                )
+                .to_string()
+        )
         .collect();
 
     // Create Recipe struct
